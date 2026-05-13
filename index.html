@@ -61,7 +61,7 @@ body.app-mode{background:#f5f6f8;}
 .gantt-left{width:420px;min-width:420px;display:flex;flex-direction:column;border-right:2px solid #e0e2e6;overflow:hidden;flex-shrink:0;}
 .gl-head{height:34px;display:grid;grid-template-columns:1fr 72px;align-items:center;background:#f0f1f3;border-bottom:1px solid #e0e2e6;padding:0 8px;flex-shrink:0;}
 .gl-head span{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
-.gl-body{overflow-y:scroll;overflow-x:hidden;flex:1;scrollbar-width:none;-ms-overflow-style:none;} .gl-body::-webkit-scrollbar{display:none;}
+.gl-body{overflow-y:scroll;overflow-x:hidden;height:100%;scrollbar-width:none;-ms-overflow-style:none;} .gl-body::-webkit-scrollbar{display:none;}
 .grow{height:34px;min-height:34px;max-height:34px;display:grid;grid-template-columns:1fr 72px;align-items:center;border-bottom:1px solid #e0e2e6;cursor:pointer;transition:background .1s;user-select:none;box-sizing:border-box;}
 .grow:hover{background:#f7f8ff;}
 .grow.grp{background:#f0f1f3;cursor:default;}
@@ -203,8 +203,9 @@ tr:last-child td{border-bottom:none;}
       <div>
         <label style="font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px;">Contraseña</label>
         <div style="position:relative;">
-          <input class="fi" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" style="padding-right:42px;">
-          <button id="toggle-pass-btn" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:16px;line-height:1;padding:4px;">👁</button>
+          <input class="fi" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px;letter-spacing:2px;">
+          <button id="toggle-pass-btn" type="button" title="Mostrar/ocultar contraseña"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:18px;line-height:1;padding:4px;z-index:2;">👁</button>
         </div>
       </div>
       <button id="login-btn" type="button" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;width:100%;">
@@ -257,21 +258,29 @@ tr:last-child td{border-bottom:none;}
     </div>
   </div>
 
-  <div id="view-gantt" style="flex:1;display:flex;overflow:hidden;">
-    <div class="gantt-shell">
-      <div class="gantt-left">
+  <div id="view-gantt" style="flex:1;display:flex;overflow:hidden;flex-direction:column;">
+    <!-- Fixed headers row -->
+    <div style="display:flex;flex-shrink:0;border-bottom:1px solid #e0e2e6;">
+      <!-- Left fixed header -->
+      <div style="width:420px;min-width:420px;flex-shrink:0;border-right:2px solid #e0e2e6;">
         <div class="gl-head"><span>Name</span><span style="text-align:center;">Progress</span></div>
+      </div>
+      <!-- Right calendar header -->
+      <div style="flex:1;overflow:hidden;">
+        <div class="month-hd" id="month-hd" style="overflow:hidden;"></div>
+        <div class="day-hd" id="day-hd" style="overflow:hidden;"></div>
+      </div>
+    </div>
+    <!-- Scrollable body row -->
+    <div style="flex:1;display:flex;overflow:hidden;">
+      <!-- Left fixed rows -->
+      <div style="width:420px;min-width:420px;flex-shrink:0;border-right:2px solid #e0e2e6;overflow:hidden;">
         <div class="gl-body" id="gl-body"></div>
       </div>
-      <div class="gantt-right">
-        <div class="cal-hd-wrap">
-          <div class="month-hd" id="month-hd"></div>
-          <div class="day-hd" id="day-hd"></div>
-        </div>
-        <div class="cal-bw" id="cal-bw">
-          <div class="cal-b" id="cal-b"></div>
-          <div class="tline hidden" id="tline"></div>
-        </div>
+      <!-- Right calendar body -->
+      <div class="cal-bw" id="cal-bw" style="flex:1;overflow:auto;position:relative;">
+        <div class="cal-b" id="cal-b"></div>
+        <div class="tline hidden" id="tline"></div>
       </div>
     </div>
   </div>
@@ -297,11 +306,8 @@ tr:last-child td{border-bottom:none;}
       <div class="dp-mf">
         <label>% Complete</label>
         <div class="dp-pct-blk">
-          <input class="dp-pct-n" type="number" id="dp-pct-n" min="0" max="100" value="0"
-            onchange="var v=Math.min(100,Math.max(0,parseInt(this.value)||0));this.value=v;document.getElementById('dp-pct-s').value=v;syncPctBar();dpSave('pct',v)">
-          <input class="dp-pct-s" type="range" id="dp-pct-s" min="0" max="100" step="5" value="0"
-            oninput="document.getElementById('dp-pct-n').value=this.value;syncPctBar()"
-            onchange="dpSave('pct',parseInt(this.value)||0)">
+          <input class="dp-pct-n" type="number" id="dp-pct-n" min="0" max="100" value="0">
+          <input class="dp-pct-s" type="range" id="dp-pct-s" min="0" max="100" step="5" value="0">
         </div>
       </div>
       <div class="dp-mf">
@@ -399,11 +405,21 @@ tr:last-child td{border-bottom:none;}
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div>
         <label style="font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;display:block;margin-bottom:4px;">Nueva contraseña</label>
-        <input type="password" id="chpass-new" placeholder="Mínimo 6 caracteres..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+        <div style="position:relative;">
+          <input type="password" id="chpass-new" placeholder="Mínimo 6 caracteres..."
+            style="width:100%;font-size:13px;padding:8px 40px 8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+          <button type="button" onclick="var i=document.getElementById('chpass-new');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#9aa0a6;">👁</button>
+        </div>
       </div>
       <div>
         <label style="font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;display:block;margin-bottom:4px;">Confirmar contraseña</label>
-        <input type="password" id="chpass-confirm" placeholder="Repite la contraseña..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+        <div style="position:relative;">
+          <input type="password" id="chpass-confirm" placeholder="Repite la contraseña..."
+            style="width:100%;font-size:13px;padding:8px 40px 8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+          <button type="button" onclick="var i=document.getElementById('chpass-confirm');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#9aa0a6;">👁</button>
+        </div>
       </div>
     </div>
     <div class="confirm-btns">
@@ -776,20 +792,22 @@ function renderGantt(){
   var tl=document.getElementById('tline'),tOff=dBetween(pd(ymd(ganttStart)),today);
   if(tOff>=0&&tOff<ganttDays){ tl.style.left=(tOff*28+14)+'px'; tl.classList.remove('hidden'); }else tl.classList.add('hidden');
   var bw=document.getElementById('cal-bw'),gb=document.getElementById('gl-body');
-  // Remove old listeners by replacing elements
   bw.onscroll=null; gb.onscroll=null;
-  var syncingScroll=false;
+  var _scrolling=false;
   bw.addEventListener('scroll',function(){
-    if(syncingScroll)return; syncingScroll=true;
+    if(_scrolling)return; _scrolling=true;
     gb.scrollTop=bw.scrollTop;
-    document.getElementById('day-hd').style.marginLeft=(-bw.scrollLeft)+'px';
-    document.getElementById('month-hd').style.marginLeft=(-bw.scrollLeft)+'px';
-    syncingScroll=false;
+    // Shift calendar headers horizontally
+    var mhd=document.getElementById('month-hd');
+    var dhd=document.getElementById('day-hd');
+    if(mhd) mhd.scrollLeft=bw.scrollLeft;
+    if(dhd) dhd.scrollLeft=bw.scrollLeft;
+    setTimeout(function(){ _scrolling=false; },0);
   });
   gb.addEventListener('scroll',function(){
-    if(syncingScroll)return; syncingScroll=true;
+    if(_scrolling)return; _scrolling=true;
     bw.scrollTop=gb.scrollTop;
-    syncingScroll=false;
+    setTimeout(function(){ _scrolling=false; },0);
   });
 }
 function toggleGrp(g){ if(collapsed.has(g))collapsed.delete(g);else collapsed.add(g); renderGantt(); }
@@ -1118,6 +1136,31 @@ var _cb=null;
 function confirmAction(title,msg,cb){ _cb=cb; document.getElementById('confirm-title').textContent=title; document.getElementById('confirm-msg').textContent=msg; document.getElementById('confirm-overlay').classList.remove('hidden'); }
 function closeConfirm(){ document.getElementById('confirm-overlay').classList.add('hidden'); _cb=null; }
 document.getElementById('confirm-ok').addEventListener('click', function(){ if(_cb)_cb(); closeConfirm(); });
+
+// Wire pct slider and number input
+var pctSlider = document.getElementById('dp-pct-s');
+var pctNum    = document.getElementById('dp-pct-n');
+if(pctSlider){
+  pctSlider.addEventListener('input', function(){
+    pctNum.value = this.value;
+    syncPctBar();
+  });
+  pctSlider.addEventListener('change', function(){
+    var v = parseInt(this.value)||0;
+    pctNum.value = v;
+    syncPctBar();
+    dpSave('pct', v);
+  });
+}
+if(pctNum){
+  pctNum.addEventListener('change', function(){
+    var v = Math.min(100, Math.max(0, parseInt(this.value)||0));
+    this.value = v;
+    if(pctSlider) pctSlider.value = v;
+    syncPctBar();
+    dpSave('pct', v);
+  });
+}
 
 // ═══════════════════════════════════
 // AUTH STATE — auto login if session exists

@@ -1373,35 +1373,72 @@ document.getElementById('confirm-ok').onclick=function(){ if(_cb)_cb(); closeCon
 // START
 // ═══════════════════════════════════════════
 
-// Wire up login form events (must use addEventListener in modules)
-document.addEventListener('DOMContentLoaded', function() {
-  // Login button
+// Wire up login form — in ES modules DOM is already parsed, attach directly
+function wireLoginForm() {
   var loginBtn = document.getElementById('login-btn');
-  if (loginBtn) loginBtn.addEventListener('click', doLogin);
-
-  // Enter key on password field
-  var passInp = document.getElementById('login-pass');
-  if (passInp) passInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
-
-  // Enter key on email field
+  var passInp  = document.getElementById('login-pass');
   var emailInp = document.getElementById('login-email');
-  if (emailInp) emailInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  var toggleBtn= document.getElementById('toggle-pass-btn');
 
-  // Toggle password visibility
-  var toggleBtn = document.getElementById('toggle-pass-btn');
-  if (toggleBtn) toggleBtn.addEventListener('click', function() {
-    var inp = document.getElementById('login-pass');
-    if (inp.type === 'password') {
-      inp.type = 'text';
-      toggleBtn.textContent = '🙈';
-    } else {
-      inp.type = 'password';
-      toggleBtn.textContent = '👁';
-    }
+  if (loginBtn)  loginBtn.addEventListener('click',  function(){ window.doLogin(); });
+  if (passInp)   passInp.addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
+  if (emailInp)  emailInp.addEventListener('keydown',function(e){ if(e.key==='Enter') window.doLogin(); });
+  if (toggleBtn) toggleBtn.addEventListener('click', function(){
+    if (!passInp) return;
+    passInp.type = passInp.type==='password' ? 'text' : 'password';
+    toggleBtn.textContent = passInp.type==='password' ? '👁' : '🙈';
   });
-});
 
+  console.log('Login form wired. loginBtn found:', !!loginBtn, 'passInp found:', !!passInp);
+}
+
+wireLoginForm();
 initFirebase();
+</script>
+<script>
+// Fallback non-module script to ensure login button works
+// This runs in global scope and can safely call window.doLogin
+(function() {
+  function tryWire() {
+    var btn = document.getElementById('login-btn');
+    var tog = document.getElementById('toggle-pass-btn');
+    var pas = document.getElementById('login-pass');
+    var eml = document.getElementById('login-email');
+    if (btn && !btn._wired) {
+      btn._wired = true;
+      btn.addEventListener('click', function() {
+        if (window.doLogin) window.doLogin();
+        else alert('App cargando, espera un momento e intenta de nuevo.');
+      });
+      console.log('Fallback: login button wired');
+    }
+    if (tog && !tog._wired) {
+      tog._wired = true;
+      tog.addEventListener('click', function() {
+        if (!pas) return;
+        pas.type = pas.type==='password' ? 'text' : 'password';
+        tog.textContent = pas.type==='password' ? '👁' : '🙈';
+      });
+    }
+    if (pas && !pas._wired) {
+      pas._wired = true;
+      pas.addEventListener('keydown', function(e) {
+        if (e.key==='Enter' && window.doLogin) window.doLogin();
+      });
+    }
+    if (eml && !eml._wired) {
+      eml._wired = true;
+      eml.addEventListener('keydown', function(e) {
+        if (e.key==='Enter' && window.doLogin) window.doLogin();
+      });
+    }
+  }
+  // Try immediately and also on DOMContentLoaded
+  tryWire();
+  document.addEventListener('DOMContentLoaded', tryWire);
+  // Also try after 1 second in case module loads late
+  setTimeout(tryWire, 1000);
+})();
 </script>
 </body>
 </html>

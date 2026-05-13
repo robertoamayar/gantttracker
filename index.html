@@ -61,8 +61,8 @@ body.app-mode{background:#f5f6f8;}
 .gantt-left{width:420px;min-width:420px;display:flex;flex-direction:column;border-right:2px solid #e0e2e6;overflow:hidden;flex-shrink:0;}
 .gl-head{height:34px;display:grid;grid-template-columns:1fr 72px;align-items:center;background:#f0f1f3;border-bottom:1px solid #e0e2e6;padding:0 8px;flex-shrink:0;}
 .gl-head span{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
-.gl-body{overflow-y:auto;overflow-x:hidden;flex:1;}
-.grow{height:34px;display:grid;grid-template-columns:1fr 72px;align-items:center;border-bottom:1px solid #e0e2e6;cursor:pointer;transition:background .1s;user-select:none;}
+.gl-body{overflow-y:scroll;overflow-x:hidden;flex:1;scrollbar-width:none;-ms-overflow-style:none;} .gl-body::-webkit-scrollbar{display:none;}
+.grow{height:34px;min-height:34px;max-height:34px;display:grid;grid-template-columns:1fr 72px;align-items:center;border-bottom:1px solid #e0e2e6;cursor:pointer;transition:background .1s;user-select:none;box-sizing:border-box;}
 .grow:hover{background:#f7f8ff;}
 .grow.grp{background:#f0f1f3;cursor:default;}
 .grow.grp:hover{background:#ecedf0;}
@@ -84,9 +84,9 @@ body.app-mode{background:#f5f6f8;}
 .day-col.tod .dom{background:#1a73e8;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;}
 .day-col.tod .dow{color:#1a73e8;}
 .day-col.we{background:#fafafa;}
-.cal-bw{flex:1;overflow:auto;position:relative;}
+.cal-bw{flex:1;overflow:auto;position:relative;} .cal-b{min-height:100%;}
 .cal-b{position:relative;}
-.cal-row{height:34px;display:flex;position:relative;border-bottom:1px solid #e0e2e6;}
+.cal-row{height:34px;min-height:34px;max-height:34px;display:flex;position:relative;border-bottom:1px solid #e0e2e6;box-sizing:border-box;}
 .cal-row.grp-r{background:#f0f1f3;}
 .dcell{width:28px;min-width:28px;border-right:1px solid #e0e2e6;height:100%;flex-shrink:0;}
 .dcell.we{background:#fafafa;}
@@ -228,9 +228,10 @@ tr:last-child td{border-bottom:none;}
         <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>
         <span id="topbar-sync-txt">En línea</span>
       </div>
-      <div class="user-pill">
+      <div class="user-pill" style="cursor:pointer;" onclick="openChPass()" title="Cambiar contraseña">
         <div class="cu-av" id="cur-av"></div>
         <span id="cur-nm"></span>
+        <span style="font-size:10px;color:#9aa0a6;">🔐</span>
       </div>
       <button class="btn btn-sm" onclick="openAddTask()">+ Tarea</button>
       <button class="btn btn-sm" onclick="window.print()">🖨</button>
@@ -297,11 +298,10 @@ tr:last-child td{border-bottom:none;}
         <label>% Complete</label>
         <div class="dp-pct-blk">
           <input class="dp-pct-n" type="number" id="dp-pct-n" min="0" max="100" value="0"
-            onchange="dpSave('pct',parseInt(this.value)||0);syncPctBar()">
+            onchange="var v=Math.min(100,Math.max(0,parseInt(this.value)||0));this.value=v;document.getElementById('dp-pct-s').value=v;syncPctBar();dpSave('pct',v)">
           <input class="dp-pct-s" type="range" id="dp-pct-s" min="0" max="100" step="5" value="0"
             oninput="document.getElementById('dp-pct-n').value=this.value;syncPctBar()"
-            onmouseup="dpSave('pct',parseInt(this.value)||0)"
-            ontouchend="dpSave('pct',parseInt(this.value)||0)">
+            onchange="dpSave('pct',parseInt(this.value)||0)">
         </div>
       </div>
       <div class="dp-mf">
@@ -386,6 +386,29 @@ tr:last-child td{border-bottom:none;}
     <div class="modal-footer">
       <button class="btn" onclick="closeAddTask()">Cancelar</button>
       <button class="btn btn-blue" onclick="saveAddTask()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div id="chpass-overlay" class="hidden" onclick="if(event.target===this)closeChPass()">
+  <div class="confirm-card" style="width:360px;">
+    <h3>🔐 Cambiar contraseña</h3>
+    <p style="font-size:12px;color:#5f6368;margin-bottom:14px;">Ingresa tu nueva contraseña.</p>
+    <div id="chpass-error" style="display:none;background:#fce8e6;color:#c0392b;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label style="font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;display:block;margin-bottom:4px;">Nueva contraseña</label>
+        <input type="password" id="chpass-new" placeholder="Mínimo 6 caracteres..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;display:block;margin-bottom:4px;">Confirmar contraseña</label>
+        <input type="password" id="chpass-confirm" placeholder="Repite la contraseña..." style="width:100%;font-size:13px;padding:8px 10px;border:1.5px solid #e0e2e6;border-radius:7px;outline:none;">
+      </div>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn" onclick="closeChPass()">Cancelar</button>
+      <button class="btn btn-blue" onclick="doChPass()">Cambiar contraseña</button>
     </div>
   </div>
 </div>
@@ -753,8 +776,21 @@ function renderGantt(){
   var tl=document.getElementById('tline'),tOff=dBetween(pd(ymd(ganttStart)),today);
   if(tOff>=0&&tOff<ganttDays){ tl.style.left=(tOff*28+14)+'px'; tl.classList.remove('hidden'); }else tl.classList.add('hidden');
   var bw=document.getElementById('cal-bw'),gb=document.getElementById('gl-body');
-  bw.onscroll=function(){ gb.scrollTop=bw.scrollTop; document.getElementById('day-hd').style.marginLeft=(-bw.scrollLeft)+'px'; document.getElementById('month-hd').style.marginLeft=(-bw.scrollLeft)+'px'; };
-  gb.onscroll=function(){ bw.scrollTop=gb.scrollTop; };
+  // Remove old listeners by replacing elements
+  bw.onscroll=null; gb.onscroll=null;
+  var syncingScroll=false;
+  bw.addEventListener('scroll',function(){
+    if(syncingScroll)return; syncingScroll=true;
+    gb.scrollTop=bw.scrollTop;
+    document.getElementById('day-hd').style.marginLeft=(-bw.scrollLeft)+'px';
+    document.getElementById('month-hd').style.marginLeft=(-bw.scrollLeft)+'px';
+    syncingScroll=false;
+  });
+  gb.addEventListener('scroll',function(){
+    if(syncingScroll)return; syncingScroll=true;
+    bw.scrollTop=gb.scrollTop;
+    syncingScroll=false;
+  });
 }
 function toggleGrp(g){ if(collapsed.has(g))collapsed.delete(g);else collapsed.add(g); renderGantt(); }
 function selRow(tid){ document.querySelectorAll('.grow.sel').forEach(function(e){ e.classList.remove('sel'); }); var el=document.getElementById('lr_'+tid); if(el)el.classList.add('sel'); }
@@ -1040,6 +1076,39 @@ function notifyAssign(task, prevAssign){
       }catch(e){}
     }
   });
+}
+
+// ═══════════════════════════════════
+// CHANGE PASSWORD
+// ═══════════════════════════════════
+function openChPass(){
+  document.getElementById('chpass-new').value='';
+  document.getElementById('chpass-confirm').value='';
+  document.getElementById('chpass-error').style.display='none';
+  document.getElementById('chpass-overlay').classList.remove('hidden');
+}
+function closeChPass(){ document.getElementById('chpass-overlay').classList.add('hidden'); }
+function doChPass(){
+  var np = document.getElementById('chpass-new').value;
+  var cp = document.getElementById('chpass-confirm').value;
+  var errEl = document.getElementById('chpass-error');
+  errEl.style.display='none';
+  if(!np){ errEl.textContent='Ingresa la nueva contraseña.'; errEl.style.display='block'; return; }
+  if(np.length<6){ errEl.textContent='La contraseña debe tener al menos 6 caracteres.'; errEl.style.display='block'; return; }
+  if(np!==cp){ errEl.textContent='Las contraseñas no coinciden.'; errEl.style.display='block'; return; }
+  var user = auth.currentUser;
+  if(!user){ errEl.textContent='No hay sesión activa.'; errEl.style.display='block'; return; }
+  user.updatePassword(np)
+    .then(function(){
+      closeChPass();
+      toast('✅ Contraseña actualizada correctamente');
+    })
+    .catch(function(e){
+      var msg = 'Error al cambiar contraseña.';
+      if(e.code==='auth/requires-recent-login') msg='Por seguridad, cierra sesión, vuelve a entrar y luego cambia tu contraseña.';
+      if(e.code==='auth/weak-password') msg='La contraseña es muy débil. Usa al menos 6 caracteres.';
+      errEl.textContent=msg; errEl.style.display='block';
+    });
 }
 
 // ═══════════════════════════════════

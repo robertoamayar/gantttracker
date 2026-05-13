@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GanttTracker Pro 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1a1917;
+  --text2: #6b6a65;
+  --text3: #9e9d98;
+  --blue: #1a5fb4;
+  --blue-bg: #e8f0fc;
+  --blue-txt: #1a4a8a;
+  --green: #2d6a2d;
+  --green-bg: #e6f4e6;
+  --green-txt: #1e4d1e;
+  --amber: #8a5a00;
+  --amber-bg: #fdf3dc;
+  --amber-txt: #6b4500;
+  --gray: #5a5a56;
+  --gray-bg: #eeede8;
+  --gray-txt: #3a3a38;
+  --red: #c0392b;
+  --red-bg: #fcecea;
+  --red-txt: #922b21;
+  --sem-g: #2d9b4a;
+  --sem-y: #d4860a;
+  --sem-r: #d93025;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; min-height: 100vh; }
+.hidden { display: none !important; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── LOGIN ── */
+#login-screen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  width: 400px;
+  box-shadow: var(--shadow);
+}
+.login-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;
+}
+.login-logo-mark {
+  width: 36px; height: 36px; background: var(--blue); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 600;
+}
+.login-logo-text { font-size: 16px; font-weight: 600; }
+.login-logo-sub { font-size: 11px; color: var(--text2); margin-top: 1px; font-family: 'DM Mono', monospace; }
+.login-subtitle { font-size: 12px; color: var(--text2); margin-bottom: 1.25rem; }
+.user-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.user-btn {
+  padding: 10px 8px; border-radius: var(--radius-lg);
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: all .15s; font-family: 'DM Sans', sans-serif;
+}
+.user-btn:hover { background: var(--surface2); border-color: var(--border2); transform: translateY(-1px); }
+.av { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+.user-btn .uname { font-size: 12px; color: var(--text); }
+.new-row { display: flex; gap: 6px; margin-top: 4px; }
+.new-row input { flex: 1; }
+
+/* ── INPUTS ── */
+input[type=text], input[type=number], select, textarea {
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  padding: 6px 10px; border-radius: var(--radius);
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); outline: none; transition: border-color .15s;
+}
+input[type=text]:focus, select:focus, textarea:focus { border-color: var(--blue); }
+input[type=range] { accent-color: var(--blue); cursor: pointer; }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  padding: 6px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text); cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-primary:hover { background: var(--blue-txt); }
+.btn-danger { background: var(--red-bg); color: var(--red-txt); border-color: transparent; }
+.btn-danger:hover { background: #f5d0cd; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+/* ── APP LAYOUT ── */
+#app-screen { display: flex; flex-direction: column; min-height: 100vh; }
+.app-header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between;
+  height: 52px; flex-shrink: 0; position: sticky; top: 0; z-index: 100;
+}
+.app-logo { display: flex; align-items: center; gap: 8px; }
+.app-logo-mark { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 600; }
+.app-logo-text { font-size: 14px; font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.cur-user-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); }
+.cur-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; }
+.cur-nm { font-size: 12px; font-weight: 500; }
+
+/* ── TABS ── */
+.tabs-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem; display: flex; gap: 0; flex-shrink: 0;
+}
+.tab-btn {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+  padding: 10px 16px; cursor: pointer; color: var(--text2);
+  border: none; background: none; border-bottom: 2px solid transparent;
+  display: flex; align-items: center; gap: 6px; transition: color .15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.on { color: var(--blue); border-bottom-color: var(--blue); }
+.tab-icon { font-size: 14px; }
+
+/* ── MAIN CONTENT ── */
+.main-content { padding: 1.25rem 1.5rem; flex: 1; }
+
+/* ── SUMMARY CARDS ── */
+.sum-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+.sc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; }
+.sc-val { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.sc-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* ── TOOLBAR ── */
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.filter-label { font-size: 11px; color: var(--text2); white-space: nowrap; }
+.toolbar select { padding: 5px 8px; font-size: 12px; }
+
+/* ── LEGEND ── */
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+.leg-circle { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── GANTT ── */
+.gantt-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.gantt-scroll { overflow-x: auto; }
+.gantt-tbl { border-collapse: collapse; width: 100%; min-width: 700px; }
+.gantt-tbl th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 600; color: var(--text2); padding: 8px 10px;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+  white-space: nowrap; text-align: left;
+}
+.gantt-tbl th.month-th { text-align: center; min-width: 52px; }
+.gantt-tbl td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.gantt-tbl tr:last-child td { border-bottom: none; }
+.gantt-tbl tr.group-row td {
+  background: var(--surface2); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--text2); padding: 5px 10px;
+}
+.task-name-cell { font-size: 12px; min-width: 160px; max-width: 200px; }
+.task-name-main { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-dep { font-size: 10px; color: var(--text3); font-style: italic; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resp-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+.sem-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.gantt-bar-cell { width: 52px; padding: 4px 3px; }
+.gantt-bar { height: 18px; border-radius: 4px; position: relative; overflow: hidden; }
+.gantt-bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 4px; transition: width .3s; }
+.gantt-actions { display: flex; gap: 4px; }
+.icon-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 2px 4px; border-radius: 4px; transition: all .15s; }
+.icon-btn:hover { color: var(--text); background: var(--surface2); }
+.icon-btn.danger:hover { color: var(--red); background: var(--red-bg); }
+
+/* ── TRACKER ── */
+.proj-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; overflow: hidden; }
+.proj-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; transition: background .15s; }
+.proj-header:hover { background: var(--surface2); }
+.ph-left { display: flex; align-items: center; gap: 8px; }
+.ph-title { font-weight: 600; font-size: 13px; }
+.ph-right { display: flex; align-items: center; gap: 8px; }
+.pct-label { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; min-width: 36px; text-align: right; }
+.prog-wrap { width: 90px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+.chevron { font-size: 14px; color: var(--text3); transition: transform .2s; }
+.chevron.open { transform: rotate(180deg); }
+
+.task-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.task-tbl th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  font-weight: 600; color: var(--text2); padding: 6px 10px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: var(--surface2); text-align: left;
+}
+.task-tbl td { padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 12px; }
+.task-tbl tr:last-child td { border-bottom: none; }
+.task-tbl select { font-size: 11px; padding: 3px 6px; width: 100%; }
+.task-tbl input[type=text] { font-size: 11px; padding: 3px 6px; width: 100%; }
+.task-tbl input[type=range] { width: 100%; }
+.by-cell { font-size: 10px; color: var(--text3); }
+.av-xs { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; vertical-align: middle; margin-right: 2px; }
+
+/* ── MODAL ── */
+#modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.modal-card {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 1.5rem; width: 440px; max-width: 95vw;
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.modal-title { font-size: 15px; font-weight: 600; }
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; color: var(--text2); font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.field input, .field select, .field textarea { width: 100%; }
+.field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* ── HISTORIAL ── */
+.hist-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.hist-tbl { width: 100%; border-collapse: collapse; }
+.hist-tbl th { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; color: var(--text2); padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--surface2); text-align: left; }
+.hist-tbl td { padding: 7px 12px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+.hist-tbl tr:last-child td { border-bottom: none; }
+.hist-empty { padding: 2rem; text-align: center; color: var(--text2); font-size: 13px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--text); color: var(--bg);
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  opacity: 0; transform: translateY(8px); transition: all .25s;
+  pointer-events: none; z-index: 300;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── PRINT ── */
+@media print {
+  .app-header, .tabs-bar, .toolbar, .legend, .no-print { display: none !important; }
+  .gantt-actions { display: none !important; }
+  body { background: #fff; }
+  .proj-block > div[id] { display: block !important; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .main-content { padding: .75rem; }
+  .sum-grid { grid-template-columns: 1fr 1fr; }
+  .app-header { padding: 0 .75rem; }
+  .tabs-bar { padding: 0 .75rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">G</div>
+      <div>
+        <div class="login-logo-text">GanttTracker Pro</div>
+        <div class="login-logo-sub">Mayo – Diciembre 2026</div>
+      </div>
+    </div>
+    <div class="login-subtitle">Selecciona tu perfil para continuar</div>
+    <div class="user-grid" id="user-grid"></div>
+    <div class="new-row">
+      <input type="text" id="new-name" placeholder="Nuevo usuario..." maxlength="24">
+      <button class="btn btn-primary" onclick="addUser()">+ Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen" class="hidden">
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-mark">G</div>
+      <span class="app-logo-text">GanttTracker Pro</span>
+    </div>
+    <div class="header-right">
+      <div class="cur-user-badge">
+        <div class="cur-av" id="cur-av"></div>
+        <span class="cur-nm" id="cur-nm"></span>
+      </div>
+      <button class="btn btn-sm no-print" onclick="openAddTask()">+ Nueva tarea</button>
+      <button class="btn btn-sm no-print" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-sm no-print" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <nav class="tabs-bar">
+    <button class="tab-btn on" id="tab-gantt-btn" onclick="switchTab('gantt')">
+      <span class="tab-icon">▦</span> Gantt
+    </button>
+    <button class="tab-btn" id="tab-tracker-btn" onclick="switchTab('tracker')">
+      <span class="tab-icon">✓</span> Tracker
+    </button>
+    <button class="tab-btn" id="tab-hist-btn" onclick="switchTab('hist')">
+      <span class="tab-icon">◷</span> Historial
+    </button>
+  </nav>
+
+  <main class="main-content">
+    <div class="sum-grid">
+      <div class="sc"><div class="sc-val" id="s-tot">0</div><div class="sc-lbl">Total tareas</div></div>
+      <div class="sc"><div class="sc-val" id="s-done" style="color:var(--green)">0</div><div class="sc-lbl">Completadas</div></div>
+      <div class="sc"><div class="sc-val" id="s-prog" style="color:var(--amber)">0</div><div class="sc-lbl">En progreso</div></div>
+      <div class="sc"><div class="sc-val" id="s-blk" style="color:var(--red)">0</div><div class="sc-lbl">Bloqueadas</div></div>
+    </div>
+
+    <div class="toolbar no-print">
+      <span class="filter-label">Mes:</span>
+      <select id="mes-fil" onchange="renderAll()">
+        <option value="-1">Todos</option>
+        <option value="0">Mayo</option><option value="1">Junio</option>
+        <option value="2">Julio</option><option value="3">Agosto</option>
+        <option value="4">Septiembre</option><option value="5">Octubre</option>
+        <option value="6">Noviembre</option><option value="7">Diciembre</option>
+      </select>
+      <div class="toolbar-sep"></div>
+      <span class="filter-label">Responsable:</span>
+      <select id="resp-fil" onchange="renderAll()">
+        <option value="ALL">Todos</option>
+        <option value="U">Usuario</option><option value="T">TI</option>
+        <option value="P">Proveedor</option><option value="S">Compartido</option>
+      </select>
+      <div class="toolbar-sep"></div>
+      <span class="filter-label">Semáforo:</span>
+      <select id="sem-fil" onchange="renderAll()">
+        <option value="ALL">Todos</option>
+        <option value="g">Verde</option>
+        <option value="y">Amarillo</option>
+        <option value="r">Rojo</option>
+      </select>
+    </div>
+
+    <div class="legend no-print">
+      <span class="leg-item"><span class="leg-dot" style="background:var(--blue)"></span>Usuario</span>
+      <span class="leg-item"><span class="leg-dot" style="background:var(--green)"></span>TI</span>
+      <span class="leg-item"><span class="leg-dot" style="background:var(--amber)"></span>Proveedor</span>
+      <span class="leg-item"><span class="leg-dot" style="background:var(--gray)"></span>Compartido</span>
+      <span class="leg-item" style="margin-left:8px;"><span class="leg-circle" style="background:var(--sem-g)"></span>En tiempo</span>
+      <span class="leg-item"><span class="leg-circle" style="background:var(--sem-y)"></span>En riesgo</span>
+      <span class="leg-item"><span class="leg-circle" style="background:var(--sem-r)"></span>Atrasado</span>
+    </div>
+
+    <div id="view-gantt"></div>
+    <div id="view-tracker" class="hidden"></div>
+    <div id="view-hist" class="hidden"></div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="hidden" onclick="closeModalOutside(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Nueva tarea</span>
+      <button class="btn btn-sm" onclick="closeModal()">✕ Cerrar</button>
+    </div>
+    <div class="field">
+      <label>Nombre de la tarea *</label>
+      <input type="text" id="m-name" placeholder="Ej. Levantamiento de requerimientos">
+    </div>
+    <div class="field">
+      <label>Proyecto / Grupo</label>
+      <select id="m-proj">
+        <option value="ERP — RISE with SAP S/4HANA">ERP — RISE with SAP S/4HANA</option>
+        <option value="POS Móvil — Ventas tienda en tienda">POS Móvil — Ventas tienda en tienda</option>
+        <option value="Infraestructura y conectividad">Infraestructura y conectividad</option>
+        <option value="Capacitación y gestión del cambio">Capacitación y gestión del cambio</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Mes inicio</label>
+        <select id="m-ms">
+          <option value="0">Mayo</option><option value="1">Junio</option>
+          <option value="2">Julio</option><option value="3">Agosto</option>
+          <option value="4">Septiembre</option><option value="5">Octubre</option>
+          <option value="6">Noviembre</option><option value="7">Diciembre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Mes fin</label>
+        <select id="m-me">
+          <option value="0">Mayo</option><option value="1">Junio</option>
+          <option value="2">Julio</option><option value="3">Agosto</option>
+          <option value="4">Septiembre</option><option value="5">Octubre</option>
+          <option value="6">Noviembre</option><option value="7">Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Responsable</label>
+        <select id="m-resp">
+          <option value="U">Usuario</option><option value="T">TI</option>
+          <option value="P">Proveedor</option><option value="S">Compartido</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Semáforo</label>
+        <select id="m-sem">
+          <option value="g">🟢 En tiempo</option>
+          <option value="y">🟡 En riesgo</option>
+          <option value="r">🔴 Atrasado</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Asignado a</label>
+      <input type="text" id="m-assign" placeholder="Nombre del responsable...">
+    </div>
+    <div class="field">
+      <label>Depende de (tarea predecesora)</label>
+      <input type="text" id="m-dep" placeholder="Nombre de la tarea anterior...">
+    </div>
+    <div class="field">
+      <label>Estado actual</label>
+      <select id="m-status">
+        <option value="pendiente">Pendiente</option>
+        <option value="en progreso">En progreso</option>
+        <option value="completado">Completado</option>
+        <option value="bloqueado">Bloqueado</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>% Avance inicial</label>
+      <input type="number" id="m-pct" min="0" max="100" value="0" style="width:80px;">
+    </div>
+    <div class="field">
+      <label>Notas / Observaciones</label>
+      <textarea id="m-note" placeholder="Comentarios, riesgos, dependencias..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">💾 Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const MONTHS = ['Mayo','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const GROUPS = [
+  'ERP — RISE with SAP S/4HANA',
+  'POS Móvil — Ventas tienda en tienda',
+  'Infraestructura y conectividad',
+  'Capacitación y gestión del cambio'
+];
+const RL = {U:'USR',T:'TI',P:'PROV',S:'COMP'};
+const RC = {U:'var(--blue)',T:'var(--green)',P:'var(--amber)',S:'var(--gray)'};
+const RBG = {U:'var(--blue-bg)',T:'var(--green-bg)',P:'var(--amber-bg)',S:'var(--gray-bg)'};
+const RTX = {U:'var(--blue-txt)',T:'var(--green-txt)',P:'var(--amber-txt)',S:'var(--gray-txt)'};
+const AVCOLORS = ['#1a5fb4','#2d6a2d','#8a5a00','#c0392b','#6c3483','#117a65'];
+const SKEY = 'gtp26_tasks_v4';
+const UKEY = 'gtp26_users_v4';
+const HKEY = 'gtp26_hist_v4';
+
+// ── STATE ──
+let tasks = [], users = [], history = [], curUser = null, curTab = 'gantt', editId = null;
+
+// ── DEFAULT DATA ──
+const DEFAULT_TASKS = [
+  {id:'t1',name:'Levantamiento de requerimientos',proj:GROUPS[0],resp:'S',ms:0,me:1,sem:'g',assign:'Bob / TI Lead',dep:'',note:'',status:'en progreso',pct:40,updBy:'',updTs:''},
+  {id:'t2',name:'Configuración de entorno SAP',proj:GROUPS[0],resp:'P',ms:1,me:3,sem:'g',assign:'Proveedor SAP',dep:'Levantamiento de requerimientos',note:'Requiere acceso VPN del proveedor',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t3',name:'Migración de datos maestros',proj:GROUPS[0],resp:'S',ms:2,me:4,sem:'y',assign:'Bob / Proveedor',dep:'Configuración de entorno SAP',note:'Riesgo: calidad datos legado',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t4',name:'Pruebas UAT',proj:GROUPS[0],resp:'U',ms:4,me:5,sem:'g',assign:'Bob',dep:'Migración de datos maestros',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t5',name:'Go-live y estabilización SAP',proj:GROUPS[0],resp:'S',ms:6,me:7,sem:'g',assign:'Todos',dep:'Pruebas UAT',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t6',name:'Evaluación y selección POS móvil',proj:GROUPS[1],resp:'U',ms:0,me:1,sem:'g',assign:'Bob',dep:'',note:'',status:'en progreso',pct:65,updBy:'',updTs:''},
+  {id:'t7',name:'Integración POS con ERP/catálogo',proj:GROUPS[1],resp:'T',ms:1,me:2,sem:'g',assign:'TI Lead',dep:'Evaluación y selección POS móvil',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t8',name:'Piloto de campo vendedores',proj:GROUPS[1],resp:'S',ms:2,me:3,sem:'y',assign:'Bob / TI Lead',dep:'Integración POS con ERP/catálogo',note:'Zonas piloto: Veracruz, Córdoba',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t9',name:'Rollout nacional POS',proj:GROUPS[1],resp:'U',ms:4,me:5,sem:'g',assign:'Bob',dep:'Piloto de campo vendedores',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t10',name:'Auditoría de red y servidores',proj:GROUPS[2],resp:'T',ms:0,me:0,sem:'g',assign:'TI Lead',dep:'',note:'',status:'en progreso',pct:70,updBy:'',updTs:''},
+  {id:'t11',name:'Upgrades de hardware',proj:GROUPS[2],resp:'P',ms:1,me:2,sem:'g',assign:'Proveedor',dep:'Auditoría de red y servidores',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t12',name:'Monitoreo y métricas',proj:GROUPS[2],resp:'T',ms:3,me:7,sem:'g',assign:'TI Lead',dep:'',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t13',name:'Diseño de materiales de training',proj:GROUPS[3],resp:'S',ms:2,me:3,sem:'g',assign:'Bob / Proveedor',dep:'',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t14',name:'Capacitación a usuarios finales',proj:GROUPS[3],resp:'U',ms:4,me:5,sem:'g',assign:'Bob',dep:'Diseño de materiales de training',note:'',status:'pendiente',pct:0,updBy:'',updTs:''},
+  {id:'t15',name:'Revisión de KPIs y cierre anual',proj:GROUPS[3],resp:'S',ms:7,me:7,sem:'g',assign:'Todos',dep:'',note:'Cierre formal del programa',status:'pendiente',pct:0,updBy:'',updTs:''}
+];
+
+// ── PERSIST ──
+function save() {
+  try { localStorage.setItem(SKEY, JSON.stringify(tasks)); } catch(e){}
+  try { localStorage.setItem(UKEY, JSON.stringify(users)); } catch(e){}
+  try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch(e){}
+}
+function load() {
+  try { const d = localStorage.getItem(SKEY); tasks = d ? JSON.parse(d) : JSON.parse(JSON.stringify(DEFAULT_TASKS)); } catch(e){ tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS)); }
+  try { const d = localStorage.getItem(UKEY); users = d ? JSON.parse(d) : []; } catch(e){ users = []; }
+  try { const d = localStorage.getItem(HKEY); history = d ? JSON.parse(d) : []; } catch(e){ history = []; }
+  if (!users.length) users = [
+    {name:'Bob', color:AVCOLORS[0]},
+    {name:'TI Lead', color:AVCOLORS[1]},
+    {name:'Proveedor', color:AVCOLORS[2]}
+  ];
+}
+
+// ── HELPERS ──
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function ini(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function now() { return new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}); }
+function getUserColor(name) { const u = users.find(x=>x.name===name); return u ? u.color : '#888'; }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function addHist(t, campo, val) {
+  history.unshift({ts:now(), user:curUser.name, color:curUser.color, proj:t.proj, task:t.name, campo, val});
+  if (history.length > 400) history = history.slice(0, 400);
+}
+
+// ── LOGIN ──
+function renderLogin() {
+  const g = document.getElementById('user-grid');
+  g.innerHTML = '';
+  users.forEach((u,i) => {
+    const b = document.createElement('button');
+    b.className = 'user-btn';
+    b.innerHTML = `<div class="av" style="background:${u.color}22;color:${u.color}">${ini(u.name)}</div><span class="uname">${u.name}</span>`;
+    b.onclick = () => selectUser(i);
+    g.appendChild(b);
+  });
+}
+function addUser() {
+  const inp = document.getElementById('new-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  users.push({name, color: AVCOLORS[users.length % AVCOLORS.length]});
+  save(); inp.value = ''; renderLogin();
+}
+function selectUser(i) {
+  curUser = users[i];
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  const av = document.getElementById('cur-av');
+  av.textContent = ini(curUser.name);
+  av.style.background = curUser.color + '22';
+  av.style.color = curUser.color;
+  document.getElementById('cur-nm').textContent = curUser.name;
+  switchTab('gantt');
+}
+function logout() {
+  curUser = null;
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  renderLogin();
+}
+
+// ── FILTERS ──
+function getMes() { return parseInt(document.getElementById('mes-fil').value); }
+function getResp() { return document.getElementById('resp-fil').value; }
+function getSem() { return document.getElementById('sem-fil').value; }
+function filteredTasks() {
+  const m = getMes(), r = getResp(), s = getSem();
+  return tasks.filter(t => {
+    if (m >= 0 && !(t.ms <= m && t.me >= m)) return false;
+    if (r !== 'ALL' && t.resp !== r) return false;
+    if (s !== 'ALL' && t.sem !== s) return false;
+    return true;
+  });
+}
+
+// ── SUMMARY ──
+function updateSummary(ft) {
+  let tot=ft.length, done=0, prog=0, blk=0;
+  ft.forEach(t => {
+    if (t.status==='completado') done++;
+    else if (t.status==='en progreso') prog++;
+    else if (t.status==='bloqueado') blk++;
+  });
+  document.getElementById('s-tot').textContent = tot;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-prog').textContent = prog;
+  document.getElementById('s-blk').textContent = blk;
+}
+
+// ── TABS ──
+function switchTab(t) {
+  curTab = t;
+  ['gantt','tracker','hist'].forEach(x => {
+    document.getElementById('view-'+x).classList.toggle('hidden', x!==t);
+    document.getElementById('tab-'+x+'-btn').classList.toggle('on', x===t);
+  });
+  renderAll();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  const ft = filteredTasks();
+  updateSummary(ft);
+  if (curTab === 'gantt') renderGantt(ft);
+  else if (curTab === 'tracker') renderTracker(ft);
+  else renderHist();
+}
+
+// ── GANTT ──
+function renderGantt(ft) {
+  const wrap = document.getElementById('view-gantt');
+  let html = `<div class="gantt-container"><div class="gantt-scroll"><table class="gantt-tbl"><thead><tr>
+    <th>Tarea</th><th>Resp.</th><th>Sem.</th><th>Asignado</th>`;
+  MONTHS.forEach(m => html += `<th class="month-th">${m}</th>`);
+  html += `<th class="no-print">Acciones</th></tr></thead><tbody>`;
+
+  const groups = [...new Set(ft.map(t=>t.proj))];
+  groups.forEach(g => {
+    html += `<tr class="group-row"><td colspan="${5+MONTHS.length+1}">${g}</td></tr>`;
+    ft.filter(t=>t.proj===g).forEach(t => {
+      const semColor = t.sem==='g' ? 'var(--sem-g)' : t.sem==='y' ? 'var(--sem-y)' : 'var(--sem-r)';
+      const semTitle = t.sem==='g' ? 'En tiempo' : t.sem==='y' ? 'En riesgo' : 'Atrasado';
+      const effPct = t.status==='completado' ? 100 : (t.pct||0);
+      html += `<tr>
+        <td class="task-name-cell">
+          <div class="task-name-main" title="${t.name}">${t.name}</div>
+          ${t.dep ? `<div class="task-dep">↳ ${t.dep}</div>` : ''}
+        </td>
+        <td><span class="resp-badge" style="background:${RBG[t.resp]};color:${RTX[t.resp]}">${RL[t.resp]}</span></td>
+        <td style="text-align:center;"><span class="sem-dot" style="background:${semColor}" title="${semTitle}"></span></td>
+        <td style="font-size:11px;color:var(--text2);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;">${t.assign||'—'}</td>`;
+      for (let i=0; i<8; i++) {
+        if (i>=t.ms && i<=t.me) {
+          const isS=i===t.ms, isE=i===t.me;
+          const br = isS&&isE?'4px':isS?'4px 0 0 4px':isE?'0 4px 4px 0':'0';
+          html += `<td class="gantt-bar-cell">
+            <div class="gantt-bar" style="background:${RC[t.resp]}22;border-radius:${br};">
+              <div class="gantt-bar-fill" style="width:${effPct}%;background:${RC[t.resp]};border-radius:${br};opacity:.85;"></div>
+            </div></td>`;
+        } else {
+          html += `<td class="gantt-bar-cell"></td>`;
+        }
+      }
+      html += `<td class="no-print">
+        <div class="gantt-actions">
+          <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Editar">✏️</button>
+          <button class="icon-btn danger" onclick="deleteTask('${t.id}')" title="Eliminar">🗑</button>
+        </div>
+      </td></tr>`;
+    });
+  });
+  html += `</tbody></table></div></div>`;
+  wrap.innerHTML = html;
+}
+
+// ── TRACKER ──
+function renderTracker(ft) {
+  const wrap = document.getElementById('view-tracker');
+  wrap.innerHTML = '';
+  const groups = [...new Set(ft.map(t=>t.proj))];
+  groups.forEach(g => {
+    const gTasks = ft.filter(t=>t.proj===g);
+    const r = gTasks[0]?.resp||'S';
+    const avgPct = gTasks.length ? Math.round(gTasks.reduce((a,t)=>a+(t.status==='completado'?100:(t.pct||0)),0)/gTasks.length) : 0;
+    const gid = 'pb_'+g.replace(/\W/g,'_');
+    const block = document.createElement('div');
+    block.className = 'proj-block';
+    block.innerHTML = `
+      <div class="proj-header" onclick="toggleBlock('${gid}','chev_${gid}')">
+        <div class="ph-left">
+          <span class="resp-badge" style="background:${RBG[r]};color:${RTX[r]}">${RL[r]}</span>
+          <span class="ph-title">${g}</span>
+        </div>
+        <div class="ph-right">
+          <span class="pct-label" id="ppct_${gid}">${avgPct}%</span>
+          <div class="prog-wrap"><div class="prog-fill" id="pbar_${gid}" style="width:${avgPct}%;background:${RC[r]}"></div></div>
+          <span class="chevron" id="chev_${gid}">▾</span>
+        </div>
+      </div>
+      <div id="${gid}" style="display:none;">
+        <table class="task-tbl">
+          <colgroup><col style="width:22px"><col><col style="width:95px"><col style="width:100px"><col style="width:75px"><col style="width:120px"><col style="width:85px"><col style="width:60px" class="no-print"></colgroup>
+          <thead><tr><th>#</th><th>Tarea</th><th>Estado</th><th>% Avance</th><th>Semáforo</th><th>Nota</th><th>Actualizado</th><th class="no-print">Editar</th></tr></thead>
+          <tbody>${gTasks.map((t,i)=>taskRow(t,i)).join('')}</tbody>
+        </table>
+      </div>`;
+    wrap.appendChild(block);
+  });
+}
+
+function taskRow(t, i) {
+  const stOpts = ['pendiente','en progreso','completado','bloqueado'];
+  const stLabels = {pendiente:'Pendiente','en progreso':'En progreso',completado:'Completado',bloqueado:'Bloqueado'};
+  const semOpts = [{v:'g',l:'🟢 Tiempo'},{v:'y',l:'🟡 Riesgo'},{v:'r',l:'🔴 Atrasado'}];
+  const effPct = t.status==='completado' ? 100 : (t.pct||0);
+  const byHtml = t.updBy
+    ? `<span class="av-xs" style="background:${getUserColor(t.updBy)}22;color:${getUserColor(t.updBy)}">${ini(t.updBy)}</span>${t.updBy}`
+    : '—';
+  return `<tr>
+    <td style="text-align:center;font-size:10px;color:var(--text3)">${i+1}</td>
+    <td>
+      <div style="font-size:12px;font-weight:500;">${t.name}</div>
+      ${t.dep ? `<div style="font-size:10px;color:var(--text3);font-style:italic;">↳ ${t.dep}</div>` : ''}
+      ${t.assign ? `<div style="font-size:10px;color:var(--text2);margin-top:1px;">👤 ${t.assign}</div>` : ''}
+    </td>
+    <td>
+      <select class="st-sel" onchange="changeStatus('${t.id}',this.value)" style="font-size:11px;padding:3px 5px;width:100%;">
+        ${stOpts.map(v=>`<option value="${v}" ${t.status===v?'selected':''}>${stLabels[v]}</option>`).join('')}
+      </select>
+    </td>
+    <td>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <input type="range" min="0" max="100" step="5" value="${effPct}" style="flex:1;"
+          oninput="this.nextElementSibling.textContent=this.value+'%'"
+          onchange="changePct('${t.id}',this.value)">
+        <span style="font-size:10px;min-width:28px;font-family:'DM Mono',monospace;">${effPct}%</span>
+      </div>
+    </td>
+    <td>
+      <select onchange="changeSem('${t.id}',this.value)" style="font-size:11px;padding:3px 4px;width:100%;">
+        ${semOpts.map(o=>`<option value="${o.v}" ${t.sem===o.v?'selected':''}>${o.l}</option>`).join('')}
+      </select>
+    </td>
+    <td><input type="text" value="${(t.note||'').replace(/"/g,'&quot;')}" placeholder="Nota..." onchange="changeNote('${t.id}',this.value)" style="font-size:11px;padding:3px 5px;width:100%;"></td>
+    <td class="by-cell">${byHtml}${t.updTs?`<div style="font-size:9px;color:var(--text3)">${t.updTs}</div>`:''}</td>
+    <td class="no-print" style="text-align:center;">
+      <button class="icon-btn" onclick="openEditTask('${t.id}')" title="Editar">✏️</button>
+    </td>
+  </tr>`;
+}
+
+function toggleBlock(bid, cid) {
+  const b = document.getElementById(bid), c = document.getElementById(cid);
+  if (!b||!c) return;
+  const open = b.style.display==='none';
+  b.style.display = open ? 'block' : 'none';
+  c.classList.toggle('open', open);
+}
+
+// ── CHANGE HANDLERS ──
+function changeStatus(tid, val) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  t.status = val;
+  if (val==='completado') t.pct = 100;
+  t.updBy = curUser.name; t.updTs = now();
+  addHist(t, 'estado', val);
+  save(); renderAll(); toast('Estado actualizado');
+}
+function changePct(tid, val) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  t.pct = parseInt(val);
+  if (t.pct===100) t.status = 'completado';
+  t.updBy = curUser.name; t.updTs = now();
+  addHist(t, 'avance', val+'%');
+  save(); updateSummary(filteredTasks());
+}
+function changeSem(tid, val) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  t.sem = val; t.updBy = curUser.name; t.updTs = now();
+  addHist(t, 'semáforo', val==='g'?'verde':val==='y'?'amarillo':'rojo');
+  save(); toast('Semáforo actualizado');
+}
+function changeNote(tid, val) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  t.note = val; t.updBy = curUser.name; t.updTs = now();
+  addHist(t, 'nota', val.slice(0,40));
+  save(); toast('Nota guardada');
+}
+
+// ── MODAL ──
+function openAddTask() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Nueva tarea';
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-proj').value = GROUPS[0];
+  document.getElementById('m-ms').value = '0';
+  document.getElementById('m-me').value = '0';
+  document.getElementById('m-resp').value = 'U';
+  document.getElementById('m-sem').value = 'g';
+  document.getElementById('m-assign').value = '';
+  document.getElementById('m-dep').value = '';
+  document.getElementById('m-status').value = 'pendiente';
+  document.getElementById('m-pct').value = '0';
+  document.getElementById('m-note').value = '';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function openEditTask(tid) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  editId = tid;
+  document.getElementById('modal-title').textContent = 'Editar tarea';
+  document.getElementById('m-name').value = t.name;
+  document.getElementById('m-proj').value = t.proj;
+  document.getElementById('m-ms').value = String(t.ms);
+  document.getElementById('m-me').value = String(t.me);
+  document.getElementById('m-resp').value = t.resp;
+  document.getElementById('m-sem').value = t.sem;
+  document.getElementById('m-assign').value = t.assign||'';
+  document.getElementById('m-dep').value = t.dep||'';
+  document.getElementById('m-status').value = t.status||'pendiente';
+  document.getElementById('m-pct').value = String(t.pct||0);
+  document.getElementById('m-note').value = t.note||'';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+function closeModalOutside(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+function saveTask() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('El nombre de la tarea es obligatorio.'); return; }
+  const ms = parseInt(document.getElementById('m-ms').value);
+  let me = parseInt(document.getElementById('m-me').value);
+  if (me < ms) me = ms;
+  const pct = Math.min(100, Math.max(0, parseInt(document.getElementById('m-pct').value)||0));
+  if (editId) {
+    const t = tasks.find(x=>x.id===editId); if(!t) return;
+    const prev = {...t};
+    t.name = name;
+    t.proj = document.getElementById('m-proj').value;
+    t.ms = ms; t.me = me;
+    t.resp = document.getElementById('m-resp').value;
+    t.sem = document.getElementById('m-sem').value;
+    t.assign = document.getElementById('m-assign').value.trim();
+    t.dep = document.getElementById('m-dep').value.trim();
+    t.status = document.getElementById('m-status').value;
+    t.pct = pct;
+    t.note = document.getElementById('m-note').value.trim();
+    t.updBy = curUser.name; t.updTs = now();
+    addHist(t, 'editó', 'tarea actualizada');
+    toast('Tarea actualizada');
+  } else {
+    const t = {
+      id: uid(), name,
+      proj: document.getElementById('m-proj').value,
+      resp: document.getElementById('m-resp').value,
+      ms, me,
+      sem: document.getElementById('m-sem').value,
+      assign: document.getElementById('m-assign').value.trim(),
+      dep: document.getElementById('m-dep').value.trim(),
+      status: document.getElementById('m-status').value,
+      pct, note: document.getElementById('m-note').value.trim(),
+      updBy: curUser.name, updTs: now()
+    };
+    tasks.push(t);
+    addHist(t, 'creó', 'nueva tarea');
+    toast('Tarea agregada');
+  }
+  save(); closeModal(); renderAll();
+}
+
+function deleteTask(tid) {
+  const t = tasks.find(x=>x.id===tid); if(!t) return;
+  if (!confirm(`¿Eliminar la tarea "${t.name}"? Esta acción no se puede deshacer.`)) return;
+  addHist(t, 'eliminó', t.name);
+  tasks = tasks.filter(x=>x.id!==tid);
+  save(); renderAll(); toast('Tarea eliminada');
+}
+
+// ── HISTORIAL ──
+function renderHist() {
+  const wrap = document.getElementById('view-hist');
+  if (!history.length) {
+    wrap.innerHTML = `<div class="hist-container"><div class="hist-empty">Sin cambios registrados aún.</div></div>`;
+    return;
+  }
+  let html = `<div class="hist-container"><table class="hist-tbl"><thead><tr>
+    <th>Fecha / hora</th><th>Usuario</th><th>Proyecto</th><th>Tarea</th><th>Campo</th><th>Valor</th>
+  </tr></thead><tbody>`;
+  history.slice(0,120).forEach(h => {
+    html += `<tr>
+      <td style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px;">${h.ts}</td>
+      <td><span class="av-xs" style="background:${h.color}22;color:${h.color}">${ini(h.user)}</span>${h.user}</td>
+      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.proj}</td>
+      <td style="font-size:11px;">${h.task}</td>
+      <td style="font-size:11px;">${h.campo}</td>
+      <td style="font-size:11px;font-weight:500;">${h.val}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+}
+
+// ── INIT ──
+load();
+renderLogin();
+</script>
+</body>
+</html>

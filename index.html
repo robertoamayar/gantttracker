@@ -269,6 +269,7 @@ tr:last-child td{border-bottom:none;}
     <button class="tnav on" id="tnav-gantt" onclick="switchView('gantt')">▦ Gantt</button>
     <button class="tnav" id="tnav-daily" onclick="switchView('daily')">📅 Diario</button>
     <button class="tnav" id="tnav-hist" onclick="switchView('hist')">◷ Historial</button>
+    <button class="tnav" id="tnav-projects" onclick="switchView('projects')">📁 Proyectos</button>
     <div class="topbar-right">
       <div class="sync-pill ok" id="topbar-sync">
         <div class="sync-dot" style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>
@@ -320,6 +321,7 @@ tr:last-child td{border-bottom:none;}
   </div>
   <div id="view-daily" class="hidden view-wrap"><div id="daily-wrap"></div></div>
   <div id="view-hist" class="hidden view-wrap"><div id="hist-wrap"></div></div>
+  <div id="view-projects" class="hidden view-wrap"><div id="projects-wrap"></div></div>
 </div>
 
 <!-- DETAIL PANEL -->
@@ -363,6 +365,57 @@ tr:last-child td{border-bottom:none;}
     <button class="dp-tab" id="dpt-comments" onclick="dpTab('comments')">Comments</button>
   </div>
   <div class="dp-body" id="dp-body"></div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div id="proj-overlay" class="hidden" onclick="if(event.target===this)closeProjModal()">
+  <div class="at-card" style="width:420px;">
+    <h3 id="proj-modal-title">Nuevo proyecto</h3>
+    <div class="af">
+      <label>Nombre del proyecto *</label>
+      <input type="text" id="proj-name" placeholder="Ej. Desarrollo de App Móvil...">
+    </div>
+    <div class="af">
+      <label>Descripción</label>
+      <textarea id="proj-desc" placeholder="Descripción breve del proyecto..." style="min-height:80px;"></textarea>
+    </div>
+    <div class="af-g">
+      <div class="af">
+        <label>Color</label>
+        <select id="proj-color">
+          <option value="#1a73e8">🔵 Azul</option>
+          <option value="#34a853">🟢 Verde</option>
+          <option value="#f9ab00">🟡 Amarillo</option>
+          <option value="#ea4335">🔴 Rojo</option>
+          <option value="#9c27b0">🟣 Morado</option>
+          <option value="#00bcd4">🩵 Cyan</option>
+          <option value="#ff6d00">🟠 Naranja</option>
+          <option value="#795548">🟤 Café</option>
+        </select>
+      </div>
+      <div class="af">
+        <label>Estado</label>
+        <select id="proj-status">
+          <option value="activo">Activo</option>
+          <option value="en pausa">En pausa</option>
+          <option value="completado">Completado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <div class="af-g">
+      <div class="af"><label>Fecha inicio</label><input type="date" id="proj-start"></div>
+      <div class="af"><label>Fecha fin</label><input type="date" id="proj-end"></div>
+    </div>
+    <div class="af">
+      <label>Responsable del proyecto</label>
+      <input type="text" id="proj-owner" placeholder="Nombre del líder...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeProjModal()">Cancelar</button>
+      <button class="btn btn-blue" onclick="saveProjModal()">💾 Guardar proyecto</button>
+    </div>
+  </div>
 </div>
 
 <!-- ADD TASK -->
@@ -614,6 +667,9 @@ async function loadAppData() {
   try {
     setSyncStatus('loading','Cargando datos...');
 
+    // Load projects first
+    await loadProjects();
+
     // Load tasks
     const tasksSnap = await getDocs(collection(db,'tasks'));
     if (tasksSnap.empty) {
@@ -748,20 +804,208 @@ window.logout = async function() {
 
 
 // ═══════════════════════════════════════════
+// PROJECTS
+// ═══════════════════════════════════════════
+let projects = [];
+let editProjId = null;
+
+async function loadProjects() {
+  try {
+    const snap = await getDocs(collection(db,'projects'));
+    if (snap.empty) {
+      // Seed default projects from DGROUPS
+      projects = DGROUPS.map((name, i) => ({
+        id: 'p'+(i+1),
+        name: name,
+        desc: '',
+        color: ['#1a73e8','#34a853','#f9ab00','#9c27b0'][i] || '#1a73e8',
+        status: 'activo',
+        start: '',
+        end: '',
+        owner: '',
+        createdBy: curUser ? curUser.name : '',
+        createdTs: nowStr()
+      }));
+      for (const p of projects) await setDoc(doc(db,'projects',p.id), p);
+    } else {
+      projects = snap.docs.map(d => ({...d.data()}));
+    }
+    // Real-time listener
+    onSnapshot(collection(db,'projects'), snap => {
+      projects = snap.docs.map(d => ({...d.data()}));
+      if (curView === 'projects') renderProjectsView();
+      // Refresh project selectors in modals if open
+    });
+  } catch(e) {
+    console.error('Load projects error:', e);
+    projects = DGROUPS.map((name,i) => ({id:'p'+(i+1),name,desc:'',color:'#1a73e8',status:'activo',start:'',end:'',owner:'',createdBy:'',createdTs:''}));
+  }
+}
+
+function getProjectNames() {
+  return projects.map(p => p.name);
+}
+
+window.openNewProject = function() {
+  editProjId = null;
+  document.getElementById('proj-modal-title').textContent = 'Nuevo proyecto';
+  document.getElementById('proj-name').value = '';
+  document.getElementById('proj-desc').value = '';
+  document.getElementById('proj-color').value = '#1a73e8';
+  document.getElementById('proj-status').value = 'activo';
+  document.getElementById('proj-start').value = new Date().toISOString().slice(0,10);
+  document.getElementById('proj-end').value = '';
+  document.getElementById('proj-owner').value = curUser ? curUser.name : '';
+  document.getElementById('proj-overlay').classList.remove('hidden');
+};
+
+window.openEditProject = function(pid) {
+  var p = projects.find(x => x.id === pid);
+  if (!p) return;
+  editProjId = pid;
+  document.getElementById('proj-modal-title').textContent = 'Editar proyecto';
+  document.getElementById('proj-name').value = p.name || '';
+  document.getElementById('proj-desc').value = p.desc || '';
+  document.getElementById('proj-color').value = p.color || '#1a73e8';
+  document.getElementById('proj-status').value = p.status || 'activo';
+  document.getElementById('proj-start').value = p.start || '';
+  document.getElementById('proj-end').value = p.end || '';
+  document.getElementById('proj-owner').value = p.owner || '';
+  document.getElementById('proj-overlay').classList.remove('hidden');
+};
+
+window.closeProjModal = function() {
+  document.getElementById('proj-overlay').classList.add('hidden');
+  editProjId = null;
+};
+
+window.saveProjModal = async function() {
+  var name = document.getElementById('proj-name').value.trim();
+  if (!name) { alert('El nombre del proyecto es obligatorio.'); return; }
+  var p = {
+    id: editProjId || uid(),
+    name: name,
+    desc: document.getElementById('proj-desc').value.trim(),
+    color: document.getElementById('proj-color').value,
+    status: document.getElementById('proj-status').value,
+    start: document.getElementById('proj-start').value,
+    end: document.getElementById('proj-end').value,
+    owner: document.getElementById('proj-owner').value.trim(),
+    createdBy: curUser ? curUser.name : '',
+    createdTs: editProjId ? (projects.find(x=>x.id===editProjId)||{}).createdTs||nowStr() : nowStr()
+  };
+  try {
+    await setDoc(doc(db,'projects',p.id), p);
+    closeProjModal();
+    toast(editProjId ? '✅ Proyecto actualizado' : '✅ Proyecto creado');
+  } catch(e) {
+    toast('⚠️ Error guardando proyecto: ' + e.message);
+  }
+};
+
+window.deleteProject = function(pid) {
+  var p = projects.find(x => x.id === pid);
+  if (!p) return;
+  var taskCount = tasks.filter(t => t.proj === p.name).length;
+  var msg = '¿Eliminar el proyecto "' + p.name + '"?';
+  if (taskCount > 0) msg += '\n\nAtención: este proyecto tiene ' + taskCount + ' tarea(s) asignada(s). Las tareas no se eliminarán.';
+  confirmAction('¿Eliminar proyecto?', msg, async function() {
+    try {
+      await deleteDoc(doc(db,'projects',pid));
+      toast('Proyecto eliminado');
+    } catch(e) {
+      toast('⚠️ Error: ' + e.message);
+    }
+  });
+};
+
+function renderProjectsView() {
+  var wrap = document.getElementById('projects-wrap');
+  if (!wrap) return;
+
+  var statusColor = {activo:'#34a853',completado:'#1a73e8','en pausa':'#f9ab00',cancelado:'#ea4335'};
+  var statusBg = {activo:'#e6f4ea',completado:'#e8f0fe','en pausa':'#fef7e0',cancelado:'#fce8e6'};
+  var statusLabel = {activo:'Activo',completado:'Completado','en pausa':'En pausa',cancelado:'Cancelado'};
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+    '<h2 style="font-size:16px;font-weight:700;">Proyectos</h2>' +
+    '<button class="btn btn-blue" onclick="openNewProject()">+ Nuevo proyecto</button>' +
+    '</div>';
+
+  if (!projects.length) {
+    html += '<div class="tbl-box"><div class="empty-state">Sin proyectos. Crea el primero.</div></div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">';
+    projects.forEach(function(p) {
+      var taskCount = tasks.filter(t => t.proj === p.name).length;
+      var doneCount = tasks.filter(t => t.proj === p.name && t.status === 'completado').length;
+      var pct = taskCount ? Math.round(doneCount/taskCount*100) : 0;
+      var sc = statusColor[p.status] || '#888';
+      var sb = statusBg[p.status] || '#f0f1f3';
+      var sl = statusLabel[p.status] || p.status;
+
+      html += '<div style="background:#fff;border:1px solid #e0e2e6;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);">' +
+        // Color bar
+        '<div style="height:5px;background:'+p.color+';"></div>' +
+        '<div style="padding:14px 16px;">' +
+          // Header row
+          '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+              '<div style="width:36px;height:36px;border-radius:9px;background:'+p.color+'22;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📁</div>' +
+              '<div>' +
+                '<div style="font-size:13px;font-weight:700;color:#1c1e21;">' + p.name + '</div>' +
+                (p.owner ? '<div style="font-size:11px;color:#5f6368;margin-top:1px;">👤 '+p.owner+'</div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:'+sb+';color:'+sc+';">'+sl+'</span>' +
+          '</div>' +
+          // Description
+          (p.desc ? '<div style="font-size:12px;color:#5f6368;margin-bottom:10px;line-height:1.5;">'+p.desc+'</div>' : '') +
+          // Dates
+          (p.start||p.end ? '<div style="font-size:11px;color:#9aa0a6;margin-bottom:10px;">📅 '+(p.start||'—')+' → '+(p.end||'—')+'</div>' : '') +
+          // Progress
+          '<div style="margin-bottom:12px;">' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6368;margin-bottom:4px;">' +
+              '<span>'+taskCount+' tarea'+(taskCount!==1?'s':'')+' · '+doneCount+' completada'+(doneCount!==1?'s':'')+'</span>' +
+              '<span style="font-weight:700;color:'+p.color+';">'+pct+'%</span>' +
+            '</div>' +
+            '<div style="height:6px;background:#f0f1f3;border-radius:3px;overflow:hidden;">' +
+              '<div style="height:100%;width:'+pct+'%;background:'+p.color+';border-radius:3px;transition:width .3s;"></div>' +
+            '</div>' +
+          '</div>' +
+          // Actions
+          '<div style="display:flex;gap:6px;">' +
+            '<button class="btn btn-sm" onclick="openEditProject(''+p.id+'')" style="flex:1;justify-content:center;">✏️ Editar</button>' +
+            '<button class="btn btn-sm" onclick="switchView('gantt')" style="flex:1;justify-content:center;">▦ Ver Gantt</button>' +
+            '<button class="btn btn-sm" onclick="deleteProject(''+p.id+'')" style="color:#ea4335;border-color:transparent;background:#fce8e6;">🗑</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  wrap.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
 // VIEW SWITCH
 // ═══════════════════════════════════════════
 window.switchView = function(v) {
   curView = v;
-  ['gantt','daily','hist'].forEach(x => {
+  ['gantt','daily','hist','projects'].forEach(x => {
     var el = document.getElementById('view-'+x);
+    if (!el) return;
     if (x==='gantt') el.style.display = v==='gantt'?'flex':'none';
     else el.classList.toggle('hidden', x!==v);
-    document.getElementById('tnav-'+x).classList.toggle('on', x===v);
+    var btn = document.getElementById('tnav-'+x);
+    if (btn) btn.classList.toggle('on', x===v);
   });
   document.getElementById('secbar').style.display = v==='gantt'?'flex':'none';
   if (v==='gantt') renderGantt();
   else if (v==='daily') renderDailySetup();
-  else renderHist();
+  else if (v==='hist') renderHist();
+  else if (v==='projects') renderProjectsView();
 };
 
 // ═══════════════════════════════════════════
@@ -900,7 +1144,8 @@ window.dpTab = function(tab) {
     var predT=tasks.find(x=>x.id===t.dep||x.name===t.dep);
     var succT=tasks.filter(x=>x.dep===t.id||x.dep===t.name);
     var dur=t.start&&t.end?Math.max(1,dBetween(pd(t.start),pd(t.end))+1)+'d':'—';
-    var groups=[]; tasks.forEach(x=>{ if(groups.indexOf(x.proj)<0)groups.push(x.proj); });
+    var groups = projects.length ? projects.map(p=>p.name) : [];
+    tasks.forEach(x=>{ if(groups.indexOf(x.proj)<0)groups.push(x.proj); });
     body.innerHTML=
       '<div class="dp-sec"><div class="dp-sec-t">Estado y asignación</div>'+
         '<div class="dp-fr"><div class="dp-fk">Estado</div><div class="dp-fv"><select onchange="dpSave(\'status\',this.value);dpTab(\'details\')">'+stOpts.map(v=>'<option value="'+v+'"'+(t.status===v?' selected':'')+'>'+stLbl[v]+'</option>').join('')+'</select></div></div>'+
@@ -948,7 +1193,10 @@ window.addComment = async function(){
 // ADD TASK
 // ═══════════════════════════════════════════
 window.openAddTask = function(){
-  var gs=[]; tasks.forEach(t=>{ if(gs.indexOf(t.proj)<0)gs.push(t.proj); }); DGROUPS.forEach(g=>{ if(gs.indexOf(g)<0)gs.push(g); });
+  // Build project list from projects collection + existing task projects
+  var gs = projects.map(p=>p.name);
+  tasks.forEach(t=>{ if(gs.indexOf(t.proj)<0)gs.push(t.proj); });
+  DGROUPS.forEach(g=>{ if(gs.indexOf(g)<0)gs.push(g); });
   document.getElementById('at-proj').innerHTML=gs.map(g=>'<option value="'+g+'">'+g+'</option>').join('');
   var td=new Date().toISOString().slice(0,10);
   ['at-name','at-assign','at-dep','at-note'].forEach(id=>document.getElementById(id).value='');

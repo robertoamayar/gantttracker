@@ -241,13 +241,13 @@ tr:last-child td{border-bottom:none;}
         <label style="font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px;">Contraseña</label>
         <div style="position:relative;">
           <input class="fi" type="password" id="login-pass" placeholder="••••••••"
-            autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"
+            autocomplete="current-password"
             style="width:100%;padding-right:42px;font-size:13px;">
-          <button onclick="togglePass()" id="toggle-pass-btn"
+          <button type="button" id="toggle-pass-btn"
             style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:15px;line-height:1;">👁</button>
         </div>
       </div>
-      <button id="login-btn" onclick="doLogin()"
+      <button id="login-btn" type="button"
         style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;margin-top:4px;">
         Iniciar sesión
       </button>
@@ -744,12 +744,7 @@ const USER_DIRECTORY = {
   'usuario2@cafiver.com.mx':   {name:'Usuario2',              color:'#ff6d00'},
 };
 
-window.togglePass = function(){
-  var inp = document.getElementById('login-pass');
-  var btn = document.getElementById('toggle-pass-btn');
-  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈'; }
-  else { inp.type='password'; btn.textContent='👁'; }
-};
+// togglePass handled via addEventListener
 
 window.doLogin = async function(){
   var email = (document.getElementById('login-email').value||'').trim().toLowerCase();
@@ -1336,6 +1331,35 @@ document.getElementById('confirm-ok').onclick=function(){ if(_cb)_cb(); closeCon
 // ═══════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════
+
+// Wire up login form events (must use addEventListener in modules)
+document.addEventListener('DOMContentLoaded', function() {
+  // Login button
+  var loginBtn = document.getElementById('login-btn');
+  if (loginBtn) loginBtn.addEventListener('click', doLogin);
+
+  // Enter key on password field
+  var passInp = document.getElementById('login-pass');
+  if (passInp) passInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+  // Enter key on email field
+  var emailInp = document.getElementById('login-email');
+  if (emailInp) emailInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+  // Toggle password visibility
+  var toggleBtn = document.getElementById('toggle-pass-btn');
+  if (toggleBtn) toggleBtn.addEventListener('click', function() {
+    var inp = document.getElementById('login-pass');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      toggleBtn.textContent = '🙈';
+    } else {
+      inp.type = 'password';
+      toggleBtn.textContent = '👁';
+    }
+  });
+});
+
 initFirebase();
 </script>
 </body>

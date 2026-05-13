@@ -752,23 +752,64 @@ window.doLogin = async function(){
   var errEl = document.getElementById('login-error');
   var btn   = document.getElementById('login-btn');
   errEl.style.display='none';
-  if(!email||!pass){ errEl.textContent='Ingresa correo y contraseña.'; errEl.style.display='block'; return; }
-  btn.textContent='Iniciando sesión...'; btn.disabled=true;
+
+  // Validations
+  if(!email){ showLoginError('⚠️ Escribe tu correo electrónico.'); return; }
+  if(!pass){  showLoginError('⚠️ Escribe tu contraseña.'); return; }
+  if(!email.includes('@')){ showLoginError('⚠️ Correo inválido — debe contener @'); return; }
+
+  btn.textContent='Iniciando sesión...';
+  btn.style.opacity='0.7';
+  btn.disabled=true;
+
+  console.log('Attempting login for:', email);
+
   try {
+    // Test Firebase connection first
+    if(!auth){ showLoginError('⚠️ Firebase Auth no inicializado. Recarga la página.'); btn.textContent='Iniciar sesión'; btn.style.opacity='1'; btn.disabled=false; return; }
+
     var cred = await signInWithEmailAndPassword(auth, email, pass);
+    console.log('Login success:', cred.user.uid);
     var profile = USER_DIRECTORY[email] || {name: email.split('@')[0], color:'#1a73e8'};
     curUser = { uid: cred.user.uid, email: email, name: profile.name, color: profile.color };
     await enterApp();
   } catch(e) {
-    btn.textContent='Iniciar sesión'; btn.disabled=false;
-    var msg = 'Correo o contraseña incorrectos.';
-    if(e.code==='auth/user-not-found') msg='Usuario no encontrado.';
-    else if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential') msg='Contraseña incorrecta.';
-    else if(e.code==='auth/too-many-requests') msg='Demasiados intentos. Espera un momento.';
-    else if(e.code==='auth/invalid-email') msg='Correo inválido.';
-    errEl.textContent=msg; errEl.style.display='block';
+    console.error('Login error code:', e.code, 'message:', e.message);
+    btn.textContent='Iniciar sesión';
+    btn.style.opacity='1';
+    btn.disabled=false;
+
+    var msg;
+    switch(e.code){
+      case 'auth/user-not-found':
+        msg='❌ Usuario no encontrado. Verifica el correo.'; break;
+      case 'auth/wrong-password':
+        msg='❌ Contraseña incorrecta.'; break;
+      case 'auth/invalid-credential':
+        msg='❌ Correo o contraseña incorrectos.'; break;
+      case 'auth/invalid-email':
+        msg='❌ Formato de correo inválido.'; break;
+      case 'auth/too-many-requests':
+        msg='⏳ Demasiados intentos fallidos. Espera unos minutos o restablece tu contraseña.'; break;
+      case 'auth/network-request-failed':
+        msg='📡 Sin conexión a internet. Verifica tu red.'; break;
+      case 'auth/operation-not-allowed':
+        msg='🔒 Login con email/contraseña no está habilitado en Firebase. Ve a Authentication → Sign-in method → Email/Password → Habilitar.'; break;
+      case 'auth/configuration-not-found':
+        msg='⚙️ Firebase no configurado correctamente. Revisa la consola.'; break;
+      default:
+        msg='⚠️ Error ['+e.code+']: '+e.message;
+    }
+    showLoginError(msg);
   }
 };
+
+function showLoginError(msg){
+  var errEl = document.getElementById('login-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  console.error('Login UI error:', msg);
+}
 
 async function enterApp() {
   document.getElementById('login-screen').classList.add('hidden');

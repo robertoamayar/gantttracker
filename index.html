@@ -466,19 +466,13 @@ tr:last-child td{border-bottom:none;}
 <div id="toast"></div>
 
 <!-- FIREBASE + APP SCRIPT -->
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
 // ═══════════════════════════════════════════
-// FIREBASE CONFIG
+// FIREBASE CONFIG (compat mode — works globally)
 // ═══════════════════════════════════════════
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, collection, doc, getDocs, setDoc, deleteDoc,
-  onSnapshot, query, orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyAhqpgxj5PQwVI-_j-L3LzukN3lyRqSwiM",
   authDomain: "gantttracker-cafiver.firebaseapp.com",
@@ -488,9 +482,27 @@ const firebaseConfig = {
   appId: "1:210970686391:web:8e59db366e4d8430202e32"
 };
 
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-const auth = getAuth(fbApp);
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.firestore();
+const auth = firebase.auth();
+
+// Compat wrappers to match existing modular code
+function collection(dbRef, name){ return dbRef.collection(name); }
+function doc(dbRef, colName, docId){ return dbRef.collection(colName).doc(docId); }
+async function getDocs(ref){
+  var snap = await ref.get();
+  // Return object with .docs array matching modular API
+  snap.docs = snap.docs || [];
+  return snap;
+}
+async function setDoc(ref, data){ return await ref.set(data); }
+async function deleteDoc(ref){ return await ref.delete(); }
+function onSnapshot(ref, cb){ return ref.onSnapshot(function(snap){ cb(snap); }); }
+function query(ref){ return ref; }
+function orderBy(){ return null; }
+function signInWithEmailAndPassword(a, email, pass){ return a.signInWithEmailAndPassword(email, pass); }
+function signOut(a){ return a.signOut(); }
+function onAuthStateChanged(a, cb){ return a.onAuthStateChanged(cb); }
 
 // ═══════════════════════════════════════════
 // EMAILJS

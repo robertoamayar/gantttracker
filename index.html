@@ -216,28 +216,47 @@ tr:last-child td{border-bottom:none;}
 
 <!-- LOGIN -->
 <div id="login-screen">
-  <div class="lcard">
-    <h1>GanttTracker Pro</h1>
-    <p class="sub">APP CAFIVER</p>
-    <div id="sync-status" class="sync-bar loading">
+  <div class="lcard" style="width:380px;padding:2.5rem 2rem;">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="width:56px;height:56px;background:#1a73e8;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(26,115,232,.35);">
+        <span style="color:#fff;font-size:26px;font-weight:700;">G</span>
+      </div>
+      <div style="font-size:20px;font-weight:700;color:#1c1e21;">GanttTracker Pro</div>
+      <div style="font-size:12px;color:#5f6368;margin-top:4px;">APP CAFIVER</div>
+    </div>
+
+    <!-- Error -->
+    <div id="login-error" style="display:none;background:#fce8e6;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:16px;line-height:1.5;"></div>
+
+    <!-- Form -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px;">Correo electrónico</label>
+        <input class="fi" type="email" id="login-email" placeholder="correo@cafiver.com.mx"
+          autocomplete="email" style="font-size:13px;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px;">Contraseña</label>
+        <div style="position:relative;">
+          <input class="fi" type="password" id="login-pass" placeholder="••••••••"
+            autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"
+            style="width:100%;padding-right:42px;font-size:13px;">
+          <button onclick="togglePass()" id="toggle-pass-btn"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:15px;line-height:1;">👁</button>
+        </div>
+      </div>
+      <button id="login-btn" onclick="doLogin()"
+        style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;margin-top:4px;">
+        Iniciar sesión
+      </button>
+    </div>
+
+    <!-- Hidden sync indicator (used by app logic) -->
+    <div id="sync-status" style="display:none;">
       <div class="sync-dot"></div>
-      <span id="sync-msg">Conectando a Firebase...</span>
-    </div>
-    <div class="section-title">¿Quién eres?</div>
-    <div class="user-list" id="user-list">
-      <div style="color:#9aa0a6;font-size:12px;text-align:center;padding:8px;">Cargando usuarios...</div>
-    </div>
-    <div class="divider"></div>
-    <div class="section-title">Correos de notificación</div>
-    <div class="email-editor" id="email-editor">
-      <div style="color:#9aa0a6;font-size:12px;">Cargando...</div>
-    </div>
-    <div class="divider"></div>
-    <div class="section-title">Nuevo usuario</div>
-    <div class="form-col">
-      <input class="fi" type="text" id="inp-name" placeholder="Nombre completo..." maxlength="30">
-      <input class="fi" type="email" id="inp-email" placeholder="correo@empresa.com">
-      <button class="btn-add" onclick="addUser()">+ Agregar usuario</button>
+      <span id="sync-msg"></span>
     </div>
   </div>
 </div>
@@ -321,10 +340,11 @@ tr:last-child td{border-bottom:none;}
         <label>% Complete</label>
         <div class="dp-pct-blk">
           <input class="dp-pct-n" type="number" id="dp-pct-n" min="0" max="100" value="0"
-            onchange="dpSave('pct',parseInt(this.value)||0);syncSlider()">
+            onchange="syncSlider();dpSave('pct',parseInt(this.value)||0)">
           <input class="dp-pct-s" type="range" id="dp-pct-s" min="0" max="100" step="5" value="0"
-            oninput="document.getElementById('dp-pct-n').value=this.value"
-            onchange="dpSave('pct',parseInt(this.value)||0);syncSlider()">
+            oninput="document.getElementById('dp-pct-n').value=this.value;syncSlider()"
+            onmouseup="dpSave('pct',parseInt(this.value)||0)"
+            ontouchend="dpSave('pct',parseInt(this.value)||0)">
         </div>
       </div>
       <div class="dp-mf">
@@ -402,6 +422,9 @@ import {
   getFirestore, collection, doc, getDocs, setDoc, deleteDoc,
   onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhqpgxj5PQwVI-_j-L3LzukN3lyRqSwiM",
@@ -414,6 +437,7 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 
 // ═══════════════════════════════════════════
 // EMAILJS
@@ -517,22 +541,29 @@ async function fbSaveTask(task) {
   if(!task || !task.id){ toast('⚠️ Tarea sin ID'); return; }
   try {
     setSyncStatus('saving','Guardando...');
-    // Clean task object — remove undefined values that Firestore rejects
-    var clean = {};
-    Object.keys(task).forEach(function(k){ if(task[k]!==undefined) clean[k]=task[k]; });
+    // Deep clean: remove undefined, convert all values to safe types
+    var clean = JSON.parse(JSON.stringify(task, function(k,v){ return v===undefined?null:v; }));
+    // Ensure numeric fields are numbers
+    clean.pct = parseInt(clean.pct)||0;
+    clean.fav = clean.fav===true;
+    // Ensure string fields exist
+    ['name','proj','resp','start','end','sem','assign','dep','note','status','updBy','updTs'].forEach(function(f){
+      if(clean[f]===null||clean[f]===undefined) clean[f]='';
+    });
+    console.log('Saving task to Firebase:', clean.id, clean.name, 'pct:', clean.pct);
     await setDoc(doc(db, 'tasks', clean.id), clean);
     setSyncStatus('ok','En línea ✓');
-    toast('✅ Guardado en Firebase');
+    toast('✅ Guardado: ' + clean.name.slice(0,30));
   } catch(e) {
-    console.error('Firebase task save error:', e.code, e.message);
+    console.error('Firebase save error:', e.code, e.message);
     setSyncStatus('error','Error al guardar');
-    if(e.code === 'permission-denied'){
-      toast('🔒 Error: Sin permisos en Firebase. Revisa las Reglas de Firestore.');
-    } else if(e.code === 'unavailable'){
-      toast('📡 Sin conexión a internet. Guardado localmente.');
+    if(e.code==='permission-denied'){
+      toast('🔒 Sin permisos Firebase — ve a Firestore > Reglas y publica: allow read, write: if true');
+    } else if(e.code==='unavailable'||e.code==='failed-precondition'){
+      toast('📡 Sin conexión. Guardado localmente.');
       localStorage.setItem('gt_tasks', JSON.stringify(tasks));
     } else {
-      toast('⚠️ Error Firebase: ' + e.message);
+      toast('⚠️ Firebase error ['+e.code+']: '+e.message.slice(0,60));
     }
   }
 }
@@ -579,24 +610,11 @@ const DEFAULT_TASKS = [
 // ═══════════════════════════════════════════
 // LOAD FROM FIREBASE WITH REAL-TIME LISTENER
 // ═══════════════════════════════════════════
-async function initFirebase() {
+async function loadAppData() {
   try {
-    setSyncStatus('loading','Conectando...');
+    setSyncStatus('loading','Cargando datos...');
 
-    // Load users
-    const usersSnap = await getDocs(collection(db, 'users'));
-    if (usersSnap.empty) {
-      users = [
-        {id:'u1',name:'Bob',        email:'',color:AVCOLORS[0]},
-        {id:'u2',name:'TI Lead',    email:'',color:AVCOLORS[1]},
-        {id:'u3',name:'Proveedor',  email:'',color:AVCOLORS[2]}
-      ];
-      for (const u of users) await setDoc(doc(db,'users',u.id), u);
-    } else {
-      users = usersSnap.docs.map(d => ({id:d.id,...d.data()}));
-    }
-
-    // Load tasks — with real-time listener
+    // Load tasks
     const tasksSnap = await getDocs(collection(db,'tasks'));
     if (tasksSnap.empty) {
       tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
@@ -620,125 +638,88 @@ async function initFirebase() {
     // Real-time listener for tasks
     onSnapshot(collection(db,'tasks'), (snap) => {
       tasks = snap.docs.map(d => ({...d.data()}));
-      if (curUser && curView === 'gantt') renderGantt();
+      if (curUser && curView==='gantt') renderGantt();
       setSyncStatus('ok','En línea ✓');
     });
 
-    // Real-time listener for users
-    onSnapshot(collection(db,'users'), (snap) => {
-      users = snap.docs.map(d => ({id:d.id,...d.data()}));
-      if (!curUser) renderLogin();
-    });
-
     fbReady = true;
-    setSyncStatus('ok','Conectado a Firebase ✓');
-    renderLogin();
+    setSyncStatus('ok','En línea ✓');
 
   } catch(e) {
-    console.error('Firebase init error:', e);
+    console.error('Firebase load error:', e);
     setSyncStatus('error','Error de conexión');
-    // Fallback to localStorage
-    toast('⚠️ Sin conexión a Firebase. Usando datos locales.');
     tasks = JSON.parse(localStorage.getItem('gt_tasks') || JSON.stringify(DEFAULT_TASKS));
-    users = JSON.parse(localStorage.getItem('gt_users') || JSON.stringify([
-      {id:'u1',name:'Bob',email:'',color:AVCOLORS[0]},
-      {id:'u2',name:'TI Lead',email:'',color:AVCOLORS[1]},
-      {id:'u3',name:'Proveedor',email:'',color:AVCOLORS[2]}
-    ]));
     fbReady = false;
-    renderLogin();
   }
 }
 
-// ═══════════════════════════════════════════
-// LOGIN
-// ═══════════════════════════════════════════
-function renderLogin() {
-  var list = document.getElementById('user-list');
-  var editor = document.getElementById('email-editor');
-  if (!list) return;
-
-  list.innerHTML = '';
-  if (!users.length) {
-    list.innerHTML = '<div style="color:#9aa0a6;font-size:12px;text-align:center;padding:8px;">Sin usuarios aún</div>';
-  }
-  users.forEach((u, i) => {
-    var card = document.createElement('div');
-    card.className = 'u-card';
-    var hasEmail = u.email && u.email.includes('@');
-    card.innerHTML =
-      '<div class="av" style="background:'+u.color+'22;color:'+u.color+'">'+ini(u.name)+'</div>'+
-      '<div class="u-info">'+
-        '<div class="u-name">'+u.name+'</div>'+
-        '<div class="u-email'+(hasEmail?'':' missing')+'">'+
-          (hasEmail ? '✉ '+u.email : 'Sin correo — agrégalo abajo')+
-        '</div>'+
-      '</div>';
-    card.onclick = () => selectUser(i);
-    list.appendChild(card);
+async function initFirebase() {
+  setSyncStatus('loading','Conectando a Firebase...');
+  // Listen for auth state
+  onAuthStateChanged(auth, async (firebaseUser) => {
+    if (firebaseUser) {
+      // User is signed in
+      var email = firebaseUser.email.toLowerCase();
+      var profile = USER_DIRECTORY[email] || {name: email.split('@')[0], color:'#1a73e8'};
+      curUser = { uid: firebaseUser.uid, email: email, name: profile.name, color: profile.color };
+      await loadAppData();
+      await enterApp();
+    } else {
+      // Not signed in — show login
+      setSyncStatus('ok','Conectado');
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+      document.body.classList.remove('app-mode');
+    }
   });
-
-  if (editor) {
-    editor.innerHTML = users.map((u, i) =>
-      '<div class="email-row">'+
-        '<div class="email-av" style="background:'+u.color+'22;color:'+u.color+'">'+ini(u.name)+'</div>'+
-        '<span class="email-name">'+u.name+'</span>'+
-        '<input class="email-inp" type="email" value="'+(u.email||'')+'" placeholder="correo@empresa.com" id="eim-'+i+'">'+
-        '<button class="del-btn" onclick="deleteUser('+i+')">✕</button>'+
-      '</div>'
-    ).join('') +
-    '<div style="margin-top:8px;"><button class="btn-add" onclick="saveEmails()" style="font-size:12px;padding:7px;">💾 Guardar correos</button></div>';
-  }
 }
 
-window.saveEmails = async function() {
-  users.forEach((u, i) => {
-    var inp = document.getElementById('eim-'+i);
-    if (inp) u.email = inp.value.trim();
-  });
-  if (fbReady) {
-    for (const u of users) await setDoc(doc(db,'users',u.id||uid()), u);
-  } else {
-    localStorage.setItem('gt_users', JSON.stringify(users));
+
+// ═══════════════════════════════════════════
+// USER DIRECTORY (email → profile)
+// ═══════════════════════════════════════════
+const USER_DIRECTORY = {
+  'aosorio@cafiver.com.mx':    {name:'Alan Osorio Cruz',      color:'#1a73e8'},
+  'vlopez@cafiver.com.mx':     {name:'Valery Lopez Olmedo',   color:'#34a853'},
+  'soportetec@cafiver.com.mx': {name:'Daniela Gomez Aleluya', color:'#f9ab00'},
+  'soportetecnico@cafiver.com.mx': {name:'Rafael Aguila',     color:'#ea4335'},
+  'ramaya@cafiver.com.mx':     {name:'Roberto Amaya',         color:'#9c27b0'},
+  'usuario1@cafiver.com.mx':   {name:'Usuario1',              color:'#00bcd4'},
+  'usuario2@cafiver.com.mx':   {name:'Usuario2',              color:'#ff6d00'},
+};
+
+window.togglePass = function(){
+  var inp = document.getElementById('login-pass');
+  var btn = document.getElementById('toggle-pass-btn');
+  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈'; }
+  else { inp.type='password'; btn.textContent='👁'; }
+};
+
+window.doLogin = async function(){
+  var email = (document.getElementById('login-email').value||'').trim().toLowerCase();
+  var pass  = (document.getElementById('login-pass').value||'').trim();
+  var errEl = document.getElementById('login-error');
+  var btn   = document.getElementById('login-btn');
+  errEl.style.display='none';
+  if(!email||!pass){ errEl.textContent='Ingresa correo y contraseña.'; errEl.style.display='block'; return; }
+  btn.textContent='Iniciando sesión...'; btn.disabled=true;
+  try {
+    var cred = await signInWithEmailAndPassword(auth, email, pass);
+    var profile = USER_DIRECTORY[email] || {name: email.split('@')[0], color:'#1a73e8'};
+    curUser = { uid: cred.user.uid, email: email, name: profile.name, color: profile.color };
+    await enterApp();
+  } catch(e) {
+    btn.textContent='Iniciar sesión'; btn.disabled=false;
+    var msg = 'Correo o contraseña incorrectos.';
+    if(e.code==='auth/user-not-found') msg='Usuario no encontrado.';
+    else if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential') msg='Contraseña incorrecta.';
+    else if(e.code==='auth/too-many-requests') msg='Demasiados intentos. Espera un momento.';
+    else if(e.code==='auth/invalid-email') msg='Correo inválido.';
+    errEl.textContent=msg; errEl.style.display='block';
   }
-  toast('✅ Correos guardados');
-  renderLogin();
 };
 
-window.deleteUser = async function(i) {
-  if (!confirm('¿Eliminar usuario "'+users[i].name+'"?')) return;
-  var uid_del = users[i].id;
-  if (fbReady && uid_del) await deleteDoc(doc(db,'users',uid_del));
-  users.splice(i,1);
-  renderLogin();
-};
-
-window.addUser = async function() {
-  var nameEl = document.getElementById('inp-name');
-  var emailEl = document.getElementById('inp-email');
-  var name = nameEl ? nameEl.value.trim() : '';
-  var email = emailEl ? emailEl.value.trim() : '';
-  if (!name) { alert('Escribe un nombre.'); return; }
-  var newUser = { id: uid(), name, email, color: AVCOLORS[users.length % AVCOLORS.length] };
-  if (fbReady) {
-    await setDoc(doc(db,'users', newUser.id), newUser);
-  } else {
-    users.push(newUser);
-    localStorage.setItem('gt_users', JSON.stringify(users));
-    renderLogin();
-  }
-  if (nameEl) nameEl.value = '';
-  if (emailEl) emailEl.value = '';
-  toast('✅ Usuario "'+name+'" agregado');
-};
-
-function selectUser(i) {
-  // Save emails before entering
-  users.forEach((u, idx) => {
-    var inp = document.getElementById('eim-'+idx);
-    if (inp) u.email = inp.value.trim();
-  });
-  curUser = users[i];
+async function enterApp() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.body.classList.add('app-mode');
@@ -747,17 +728,24 @@ function selectUser(i) {
   av.style.background = curUser.color+'22';
   av.style.color = curUser.color;
   document.getElementById('cur-nm').textContent = curUser.name;
+  document.getElementById('login-btn').textContent='Iniciar sesión';
+  document.getElementById('login-btn').disabled=false;
   switchView('gantt');
 }
 
-window.logout = function() {
+window.logout = async function() {
+  try { await signOut(auth); } catch(e){}
   curUser = null;
   closePanel();
   document.getElementById('app').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
   document.body.classList.remove('app-mode');
-  renderLogin();
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').style.display='none';
+  setSyncStatus('ok','Conectado');
 };
+
 
 // ═══════════════════════════════════════════
 // VIEW SWITCH
